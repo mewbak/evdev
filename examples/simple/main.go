@@ -7,11 +7,12 @@ import (
 	"fmt"
 	"github.com/jteeuwen/evdev"
 	"os"
+	"os/signal"
 	"strings"
 )
 
 // Target device. Can be any of the /dev/input/eventXXX nodes
-const Device = "/dev/input/event0"
+const Device = "/dev/input/event2"
 
 func main() {
 	// Create and open our device.
@@ -44,6 +45,18 @@ func main() {
 	fmt.Printf(" Version : %04x\n", id.Version)
 	fmt.Printf(" Bus     : %s\n", busName(id.BusType))
 	fmt.Printf(" Events  : %s\n", listEvents(events))
+
+	// Read events from the device, until we exit the program.
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, os.Interrupt, os.Kill)
+	for {
+		select {
+		case <-signals:
+			return
+		case evt := <-dev.C:
+			fmt.Printf("%+v\n", evt)
+		}
+	}
 }
 
 // busName returns the string equivalent of the given bus type.

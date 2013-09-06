@@ -8,9 +8,12 @@ import (
 	"unsafe"
 )
 
+const eventBufferSize = 64
+
 // Device represents a single input device node.
 type Device struct {
 	fd *os.File
+	C  chan Event
 }
 
 // Open opens a new device for the given node name.
@@ -18,6 +21,8 @@ type Device struct {
 func Open(node string) (dev *Device, err error) {
 	dev = new(Device)
 	dev.fd, err = os.Open(node)
+	dev.C = make(chan Event, eventBufferSize)
+	go dev.poll()
 	return
 }
 
@@ -27,7 +32,30 @@ func (d *Device) Close() (err error) {
 		err = d.fd.Close()
 		d.fd = nil
 	}
+
+	close(d.C)
 	return
+}
+
+// poll polls the device for incoming events.
+func (d *Device) poll() {
+	var e Event
+
+	size := int(unsafe.Sizeof(e))
+	buf := make([]byte, size*eventBufferSize)
+
+	for {
+		n, err := d.fd.Read(buf)
+		if err != nil {
+			return
+		}
+
+		evt := (*(*[1<<31 - 1]Event)(unsafe.Pointer(&buf[0])))[:n/size]
+
+		for n = range evt {
+			d.C <- evt[n]
+		}
+	}
 }
 
 // EventTypes determines the device's capabilities.
