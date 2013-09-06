@@ -23,7 +23,7 @@ func ioctl(fd, name uintptr, data interface{}) error {
 		v = dd
 
 	default:
-		return fmt.Errorf("ioctl: Invalid argument.")
+		return fmt.Errorf("ioctl: Invalid argument: %T", data)
 	}
 
 	_, _, errno := syscall.RawSyscall(syscall.SYS_IOCTL, fd, name, v)
