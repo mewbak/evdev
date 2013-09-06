@@ -11,23 +11,23 @@ import (
 // <linux/input.h>
 
 var (
-	_EVIOCGVERSION    int
-	_EVIOCGID         int
-	_EVIOCGREP        int
-	_EVIOCSREP        int
-	_EVIOCGKEYCODE    int
-	_EVIOCGKEYCODE_V2 int
-	_EVIOCSKEYCODE    int
-	_EVIOCSKEYCODE_V2 int
-	_EVIOCSFF         int
-	_EVIOCRMFF        int
-	_EVIOCGEFFECTS    int
-	_EVIOCGRAB        int
-	_EVIOCSCLOCKID    int
+	_EVIOCGVERSION    uintptr
+	_EVIOCGID         uintptr
+	_EVIOCGREP        uintptr
+	_EVIOCSREP        uintptr
+	_EVIOCGKEYCODE    uintptr
+	_EVIOCGKEYCODE_V2 uintptr
+	_EVIOCSKEYCODE    uintptr
+	_EVIOCSKEYCODE_V2 uintptr
+	_EVIOCSFF         uintptr
+	_EVIOCRMFF        uintptr
+	_EVIOCGEFFECTS    uintptr
+	_EVIOCGRAB        uintptr
+	_EVIOCSCLOCKID    uintptr
 )
 
 func init() {
-	var i int
+	var i int32
 	var id Id
 	var ke KeymapEntry
 	var ffe Effect
@@ -38,21 +38,21 @@ func init() {
 	sizeof_keymap_entry := int(unsafe.Sizeof(ke))
 	sizeof_effect := int(unsafe.Sizeof(ffe))
 
-	_EVIOCGVERSION = _IOR('E', 0x01, sizeof_int)
-	_EVIOCGID = _IOR('E', 0x02, sizeof_id)
-	_EVIOCGREP = _IOR('E', 0x03, sizeof_int2)
-	_EVIOCSREP = _IOW('E', 0x03, sizeof_int2)
+	_EVIOCGVERSION = uintptr(_IOR('E', 0x01, sizeof_int))
+	_EVIOCGID = uintptr(_IOR('E', 0x02, sizeof_id))
+	_EVIOCGREP = uintptr(_IOR('E', 0x03, sizeof_int2))
+	_EVIOCSREP = uintptr(_IOW('E', 0x03, sizeof_int2))
 
-	_EVIOCGKEYCODE = _IOR('E', 0x04, sizeof_int2)
-	_EVIOCGKEYCODE_V2 = _IOR('E', 0x04, sizeof_keymap_entry)
-	_EVIOCSKEYCODE = _IOW('E', 0x04, sizeof_int2)
-	_EVIOCSKEYCODE_V2 = _IOW('E', 0x04, sizeof_keymap_entry)
+	_EVIOCGKEYCODE = uintptr(_IOR('E', 0x04, sizeof_int2))
+	_EVIOCGKEYCODE_V2 = uintptr(_IOR('E', 0x04, sizeof_keymap_entry))
+	_EVIOCSKEYCODE = uintptr(_IOW('E', 0x04, sizeof_int2))
+	_EVIOCSKEYCODE_V2 = uintptr(_IOW('E', 0x04, sizeof_keymap_entry))
 
-	_EVIOCSFF = _IOC(_IOC_WRITE, 'E', 0x80, sizeof_effect)
-	_EVIOCRMFF = _IOW('E', 0x81, sizeof_int)
-	_EVIOCGEFFECTS = _IOR('E', 0x84, sizeof_int)
-	_EVIOCGRAB = _IOW('E', 0x90, sizeof_int)
-	_EVIOCSCLOCKID = _IOW('E', 0xa0, sizeof_int)
+	_EVIOCSFF = uintptr(_IOC(_IOC_WRITE, 'E', 0x80, sizeof_effect))
+	_EVIOCRMFF = uintptr(_IOW('E', 0x81, sizeof_int))
+	_EVIOCGEFFECTS = uintptr(_IOR('E', 0x84, sizeof_int))
+	_EVIOCGRAB = uintptr(_IOW('E', 0x90, sizeof_int))
+	_EVIOCSCLOCKID = uintptr(_IOW('E', 0xa0, sizeof_int))
 
 }
 
