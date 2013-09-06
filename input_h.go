@@ -261,6 +261,17 @@ type Event struct {
 	Value int32
 }
 
+// Id represents the device identity.
+//
+// The bus type is the only field that contains accurate data.
+// It can be compared to the BusXXX constants.
+// The vendor, product and version fields are bus type-specific
+// information relating to the identity of the device.
+// Modern devices (typically using PCI or USB) do have information
+// that can be used, but legacy devices (such as serial mice,
+// PS/2 keyboards and game ports on ISA sound cards) do not.
+// These numbers therefore are not meaningful for some
+// values of bus type.
 type Id struct {
 	BusType uint16
 	Vendor  uint16
@@ -305,23 +316,24 @@ const (
 	InputPropCount     = InputPropMax + 1
 )
 
+const EvVersion = 0x010001
+
 // Event types
 const (
-	EvVersion  = 0x010001
-	EvSyn      = 0x00
-	EvKey      = 0x01
-	EvRel      = 0x02
-	EvAbs      = 0x03
-	EvMsc      = 0x04
-	EvSw       = 0x05
-	EvLed      = 0x11
-	EvSnd      = 0x12
-	EvRep      = 0x14
-	EvFf       = 0x15
-	EvPwr      = 0x16
-	EvFfStatus = 0x17
-	EvMax      = 0x1f
-	EvCount    = EvMax + 1
+	EvSync                = 0x00 // Synchronisation events.
+	EvKey                 = 0x01 // Absolute binary results, such as keys and buttons.
+	EvRelative            = 0x02 // Relative results, such as the axes on a mouse.
+	EvAbsolute            = 0x03 // Absolute integer results, such as the axes on a joystick or for a tablet.
+	EvMisc                = 0x04 // Miscellaneous uses that didn't fit anywhere else.
+	EvSw                  = 0x05 // Used to describe binary state input switches
+	EvLed                 = 0x11 // LEDs and similar indications.
+	EvSound               = 0x12 // Sound output, such as buzzers.
+	EvRepeat              = 0x14 // Enables autorepeat of keys in the input core.
+	EvForceFeedback       = 0x15 // Sends force-feedback effects to a device.
+	EvPower               = 0x16 // Power management events.
+	EvForceFeedbackStatus = 0x17 // Device reporting of force-feedback effects back to the host.
+	EvMax                 = 0x1f
+	EvCount               = EvMax + 1
 )
 
 // Synchronization events.
