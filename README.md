@@ -1,8 +1,14 @@
 ## evdev
 
+evdev is a pure Go implementation of the Linux evdev kernel module.
+It allows a Go application to track input events from any devices
+mapped to `/dev/input`.
+
+
 ### Usage
 
     go get github.com/jteeuwen/evdev
+
 
 ### License
 
