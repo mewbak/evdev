@@ -42,7 +42,7 @@ func hasKeys(dev *evdev.Device) bool {
 	events := dev.EventTypes()
 
 	for n := 0; n < events.Len(); n++ {
-		if events.Test(n) && n == evdev.EvKey {
+		if n == evdev.EvKey && events.Test(n) {
 			return true
 		}
 	}
