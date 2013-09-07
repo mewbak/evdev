@@ -1,5 +1,7 @@
 ## evdev
 
+**Note**: This is work in progress. Use at your own risk.
+
 evdev is a pure Go implementation of the Linux evdev API.
 It allows a Go application to track events from any devices
 mapped to `/dev/input/event[X]`.
