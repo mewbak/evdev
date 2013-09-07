@@ -12,11 +12,11 @@ import (
 
 const eventBufferSize = 64
 
-// Device represents a single input device node.
+// Device represents a single device node.
 type Device struct {
 	fd     *os.File
-	Inbox  chan Event
-	Outbox chan Event
+	Inbox  chan Event // Channel exposing incoming events.
+	Outbox chan Event // Channel for outgoing events.
 }
 
 // Open opens a new device for the given node name.
@@ -54,7 +54,7 @@ func (d *Device) KeyState() Bitset {
 }
 
 // EventTypes determines the device's capabilities.
-// It yields a bitset which can be tested for against
+// It yields a bitset which can be tested against
 // EvXXX constants to determine which types are supported.
 func (d *Device) EventTypes() Bitset {
 	bs := NewBitset(EvMax)
