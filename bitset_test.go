@@ -16,7 +16,7 @@ func TestBitset(t *testing.T) {
 	bs.Set(76)
 
 	want := []struct {
-		Index uint
+		Index int
 		Value bool
 	}{
 		{0, true},

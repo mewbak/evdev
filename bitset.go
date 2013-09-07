@@ -25,6 +25,11 @@ func NewBitset(bits int) Bitset {
 	return make(Bitset, size)
 }
 
+// Len returns the number of bits in the set.
+func (b Bitset) Len() int {
+	return len(b) * WordBitSize
+}
+
 // Bytes returns the bitset as a byte slice.
 // This is the same memory, so any changes to the returned slice,
 // will affect the bitset.
@@ -38,27 +43,27 @@ func (b Bitset) Bytes() []byte {
 }
 
 // Set sets the bit at the given index.
-func (b Bitset) Set(i uint) {
+func (b Bitset) Set(i int) {
 	w := i / WordBitSize
-	if w >= uint(len(b)) {
+	if w >= len(b) {
 		return
 	}
 
-	bit := Word(1 << (i % WordBitSize))
+	bit := Word(1 << uint(i%WordBitSize))
 	b[w] &^= bit
 	b[w] ^= bit
 }
 
 // Unset clears the bit at the given index.
-func (b Bitset) Unset(i uint) {
+func (b Bitset) Unset(i int) {
 	w := i / WordBitSize
-	if w < uint(len(b)) {
-		b[w] &^= 1 << (i % WordBitSize)
+	if w < len(b) {
+		b[w] &^= 1 << uint(i%WordBitSize)
 	}
 }
 
 // Test returns true if the bit at the given index is set.
-func (b Bitset) Test(i uint) bool {
+func (b Bitset) Test(i int) bool {
 	w := i / WordBitSize
-	return w < uint(len(b)) && ((b[w]>>(i%WordBitSize))&1) == 1
+	return w < len(b) && ((b[w]>>uint(i%WordBitSize))&1) == 1
 }
