@@ -12,17 +12,20 @@ const eventBufferSize = 64
 
 // Device represents a single input device node.
 type Device struct {
-	fd *os.File
-	C  chan Event
+	fd     *os.File
+	Inbox  chan Event
+	Outbox chan Event
 }
 
 // Open opens a new device for the given node name.
-// This can be anything listed in /dev/input/.
+// This can be anything listed in /dev/input/event[x].
 func Open(node string) (dev *Device, err error) {
 	dev = new(Device)
 	dev.fd, err = os.Open(node)
-	dev.C = make(chan Event, eventBufferSize)
-	go dev.poll()
+	dev.Inbox = make(chan Event, eventBufferSize)
+	dev.Outbox = make(chan Event, eventBufferSize>>1)
+	go dev.pollIn()
+	go dev.pollOut()
 	return
 }
 
@@ -33,12 +36,15 @@ func (d *Device) Close() (err error) {
 		d.fd = nil
 	}
 
-	close(d.C)
+	close(d.Inbox)
+	close(d.Outbox)
 	return
 }
 
-// poll polls the device for incoming events.
-func (d *Device) poll() {
+// pollIn polls the device for incoming events.
+// We can receive many events with a single read.
+// This is why the outgoing event channel has a large buffer.
+func (d *Device) pollIn() {
 	var e Event
 
 	size := int(unsafe.Sizeof(e))
@@ -53,7 +59,23 @@ func (d *Device) poll() {
 		evt := (*(*[1<<31 - 1]Event)(unsafe.Pointer(&buf[0])))[:n/size]
 
 		for n = range evt {
-			d.C <- evt[n]
+			d.Inbox <- evt[n]
+		}
+	}
+}
+
+// pollOut polls the outbox for pending messages.
+// These are then sent to the device.
+func (d *Device) pollOut() {
+	var e Event
+	size := int(unsafe.Sizeof(e))
+
+	for msg := range d.Outbox {
+		buf := (*(*[1<<31 - 1]byte)(unsafe.Pointer(&msg)))[:size]
+
+		_, err := d.fd.Write(buf)
+		if err != nil {
+			return
 		}
 	}
 }

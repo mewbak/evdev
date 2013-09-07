@@ -12,7 +12,7 @@ import (
 )
 
 // Target device. Can be any of the /dev/input/eventXXX nodes
-const Device = "/dev/input/event2"
+const Device = "/dev/input/event0"
 
 func main() {
 	// Create and open our device.
@@ -53,7 +53,7 @@ func main() {
 		select {
 		case <-signals:
 			return
-		case evt := <-dev.C:
+		case evt := <-dev.Inbox:
 			fmt.Printf("%+v\n", evt)
 		}
 	}
