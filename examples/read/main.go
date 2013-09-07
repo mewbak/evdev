@@ -116,11 +116,11 @@ func busName(bus uint16) string {
 }
 
 // listEvents lists the event types supported by the device.
-func listEvents(bs evdev.Bitset) string {
+func listEvents(set evdev.Bitset) string {
 	var list []string
 
-	for n := uint(0); n < evdev.EvMax; n++ {
-		if !bs.Test(n) {
+	for n := 0; n < set.Len(); n++ {
+		if !set.Test(n) {
 			continue
 		}
 

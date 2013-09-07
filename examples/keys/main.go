@@ -41,7 +41,7 @@ func main() {
 func hasKeys(dev *evdev.Device) bool {
 	events := dev.EventTypes()
 
-	for n := uint(0); n < evdev.EvMax; n++ {
+	for n := 0; n < events.Len(); n++ {
 		if events.Test(n) && n == evdev.EvKey {
 			return true
 		}
@@ -53,7 +53,7 @@ func hasKeys(dev *evdev.Device) bool {
 // listState prints the global key/button state, as defined
 // in the given bitset.
 func listState(set evdev.Bitset) {
-	for n := uint(0); n < evdev.KeyMax; n++ {
+	for n := 0; n < set.Len(); n++ {
 		// The key is considered pressed if the bitset
 		// has its corresponding bit set.
 		if !set.Test(n) {
