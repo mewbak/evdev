@@ -66,10 +66,43 @@ func (d *Device) LEDState() Bitset {
 // RepeatState returns the current, global repeat state.
 // This applies only to devices which have the EvRepeat capability defined.
 // This can be determined through `Device.EventTypes()`.
-func (d *Device) RepeatState() [2]uint32 {
-	var rep [2]uint32
+//
+// Refer to Device.SetRepeatState for an explanation on what
+// the returned values mean.
+func (d *Device) RepeatState() (int, int) {
+	var rep [2]int32
 	ioctl(d.fd.Fd(), _EVIOCGREP, unsafe.Pointer(&rep[0]))
-	return rep
+	return int(rep[0]), int(rep[1])
+}
+
+// SetRepeatState sets the global repeat state for the given
+// device.
+//
+// The values indicate (in milliseconds) the delay before
+// the device starts repeating and the delay between
+// subsequent repeats. This might apply to a keyboard where
+// the user presses and holds a key.
+//
+// E.g.: We see an initial character immediately, then
+// another @initial milliseconds later and after that,
+// once every @subsequent milliseconds, until the key
+// is released.
+//
+// This returns false if the operation failed.
+func (d *Device) SetRepeatState(initial, subsequent int) bool {
+	if initial < 0 {
+		initial = 0
+	}
+
+	if subsequent < 0 {
+		subsequent = 0
+	}
+
+	var rep [2]int32
+	rep[0] = int32(initial)
+	rep[1] = int32(subsequent)
+
+	return ioctl(d.fd.Fd(), _EVIOCSREP, unsafe.Pointer(&rep[0])) == nil
 }
 
 // EventTypes determines the device's capabilities.
