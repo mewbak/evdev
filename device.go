@@ -63,6 +63,43 @@ func (d *Device) LEDState() Bitset {
 	return bs
 }
 
+// KeyMap fills the key mapping for the given key.
+// E.g.: Pressing M, will input N into the input system.
+// This allows us to rewire physical keys.
+//
+// Refer to `Device.SetKeyMap()` for information on what
+// this means.
+//
+// Be aware that the KeyMap functions may not work on every keyboard.
+func (d *Device) KeyMap(key int) int {
+	var m [2]int32
+	m[0] = int32(key)
+	ioctl(d.fd.Fd(), _EVIOCGKEYCODE, unsafe.Pointer(&m[0]))
+	return int(m[1])
+}
+
+// SetKeyMap sets the given key to the specified mapping.
+// E.g.: Pressing M, will input N into the input system.
+// This allows us to rewire physical keys.
+//
+// Some input drivers support variable mappings between the keys
+// held down (which are interpreted by the keyboard scan and reported
+// as scancodes) and the events sent to the input layer.
+//
+// You can change which key is associated with each scancode
+// using this call. The value of the scancode is the first element
+// in the integer array (list[n][0]), and the resulting input
+// event key number (keycode) is the second element in the array.
+// (list[n][1]).
+//
+// Be aware that the KeyMap functions may not work on every keyboard.
+func (d *Device) SetKeyMap(key, value int) {
+	var m [2]int32
+	m[0] = int32(key)
+	m[1] = int32(value)
+	ioctl(d.fd.Fd(), _EVIOCSKEYCODE, unsafe.Pointer(&m[0]))
+}
+
 // RepeatState returns the current, global repeat state.
 // This applies only to devices which have the EvRepeat capability defined.
 // This can be determined through `Device.EventTypes()`.
