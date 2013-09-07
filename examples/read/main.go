@@ -34,11 +34,21 @@ func main() {
 	// Fetch the bitmask, specifying the supported event types.
 	events := dev.EventTypes()
 
+	// Fetch device name.
+	name := dev.Name()
+
+	// Fetch physical device mapping.
+	path := dev.Path()
+
+	// Fetch device serial code.
+	// For most devices this is not defined and yields an empty string.
+	serial := dev.Serial()
+
 	// Display all the collected information about our device.
 	fmt.Printf(" Node    : %s\n", node)
-	fmt.Printf(" Name    : %s\n", dev.Name())
-	fmt.Printf(" Path    : %s\n", dev.Path())
-	fmt.Printf(" Serial  : %s\n", dev.Serial())
+	fmt.Printf(" Name    : %s\n", name)
+	fmt.Printf(" Path    : %s\n", path)
+	fmt.Printf(" Serial  : %s\n", serial)
 	fmt.Printf(" Driver  : %d.%d.%d\n", major, minor, revision)
 	fmt.Printf(" Vendor  : %04x\n", id.Vendor)
 	fmt.Printf(" Product : %04x\n", id.Product)
