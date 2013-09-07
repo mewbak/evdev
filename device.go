@@ -5,6 +5,7 @@ package evdev
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"unsafe"
 )
@@ -42,56 +43,21 @@ func (d *Device) Close() (err error) {
 	return
 }
 
-// pollIn polls the device for incoming events.
-// We can receive many events with a single read.
-// This is why the outgoing event channel has a large buffer.
-func (d *Device) pollIn() {
-	var e Event
-
-	size := int(unsafe.Sizeof(e))
-	buf := make([]byte, size*eventBufferSize)
-
-	for {
-		n, err := d.fd.Read(buf)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "poll inbox: %v\n", err)
-			return
-		}
-
-		evt := (*(*[1<<31 - 1]Event)(unsafe.Pointer(&buf[0])))[:n/size]
-
-		for n = range evt {
-			d.Inbox <- evt[n]
-		}
-	}
-}
-
-// pollOut polls the outbox for pending messages.
-// These are then sent to the device.
-func (d *Device) pollOut() {
-	var e Event
-	size := int(unsafe.Sizeof(e))
-
-	for msg := range d.Outbox {
-		buf := (*(*[1<<31 - 1]byte)(unsafe.Pointer(&msg)))[:size]
-
-		n, err := d.fd.Write(buf)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "poll outbox: %v\n", err)
-			return
-		}
-
-		if n < size {
-			fmt.Fprintf(os.Stderr, "poll outbox: short write\n")
-		}
-	}
+// Keystate returns the global key- and button- states.
+// This applies only to devices which have the EvKey capability defined.
+// This can be determined through `Device.EventTypes()`.
+func (d *Device) KeyState() Bitset {
+	bs := NewBitset(KeyMax)
+	buf := bs.Bytes()
+	ioctl(d.fd.Fd(), uintptr(_EVIOCGKEY(len(buf))), unsafe.Pointer(&buf[0]))
+	return bs
 }
 
 // EventTypes determines the device's capabilities.
 // It yields a bitset which can be tested for against
 // EvXXX constants to determine which types are supported.
 func (d *Device) EventTypes() Bitset {
-	bs := NewBitset((EvMax + 7) / 8)
+	bs := NewBitset(EvMax)
 	buf := bs.Bytes()
 	ioctl(d.fd.Fd(), uintptr(_EVIOCGBIT(0, EvMax)), unsafe.Pointer(&buf[0]))
 	return bs
@@ -158,4 +124,53 @@ func (d *Device) Id() Id {
 	var id Id
 	ioctl(d.fd.Fd(), _EVIOCGID, unsafe.Pointer(&id))
 	return id
+}
+
+// pollIn polls the device for incoming events.
+// We can receive many events with a single read.
+// This is why the outgoing event channel has a large buffer.
+func (d *Device) pollIn() {
+	var e Event
+
+	size := int(unsafe.Sizeof(e))
+	buf := make([]byte, size*eventBufferSize)
+
+	for {
+		n, err := d.fd.Read(buf)
+		if err != nil {
+			if err != io.EOF {
+				fmt.Fprintf(os.Stderr, "poll inbox: %v\n", err)
+			}
+			return
+		}
+
+		evt := (*(*[1<<31 - 1]Event)(unsafe.Pointer(&buf[0])))[:n/size]
+
+		for n = range evt {
+			d.Inbox <- evt[n]
+		}
+	}
+}
+
+// pollOut polls the outbox for pending messages.
+// These are then sent to the device.
+func (d *Device) pollOut() {
+	var e Event
+	size := int(unsafe.Sizeof(e))
+
+	for msg := range d.Outbox {
+		buf := (*(*[1<<31 - 1]byte)(unsafe.Pointer(&msg)))[:size]
+
+		n, err := d.fd.Write(buf)
+		if err != nil {
+			if err != io.EOF {
+				fmt.Fprintf(os.Stderr, "poll outbox: %v\n", err)
+			}
+			return
+		}
+
+		if n < size {
+			fmt.Fprintf(os.Stderr, "poll outbox: short write\n")
+		}
+	}
 }
