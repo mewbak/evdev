@@ -43,13 +43,23 @@ func (d *Device) Close() (err error) {
 	return
 }
 
-// Keystate returns the global key- and button- states.
+// Keystate returns the current,global key- and button- states.
 // This applies only to devices which have the EvKey capability defined.
 // This can be determined through `Device.EventTypes()`.
 func (d *Device) KeyState() Bitset {
 	bs := NewBitset(KeyMax)
 	buf := bs.Bytes()
 	ioctl(d.fd.Fd(), uintptr(_EVIOCGKEY(len(buf))), unsafe.Pointer(&buf[0]))
+	return bs
+}
+
+// LEDState returns the current, global LED state.
+// This applies only to devices which have the EvLed capability defined.
+// This can be determined through `Device.EventTypes()`.
+func (d *Device) LEDState() Bitset {
+	bs := NewBitset(LedMax)
+	buf := bs.Bytes()
+	ioctl(d.fd.Fd(), uintptr(_EVIOCGLED(len(buf))), unsafe.Pointer(&buf[0]))
 	return bs
 }
 
