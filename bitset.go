@@ -45,7 +45,7 @@ func (b Bitset) Bytes() []byte {
 // Set sets the bit at the given index.
 func (b Bitset) Set(i int) {
 	w := i / WordBitSize
-	if w >= len(b) {
+	if i < 0 || w >= len(b) {
 		return
 	}
 
@@ -57,7 +57,7 @@ func (b Bitset) Set(i int) {
 // Unset clears the bit at the given index.
 func (b Bitset) Unset(i int) {
 	w := i / WordBitSize
-	if w < len(b) {
+	if i >= 0 && w < len(b) {
 		b[w] &^= 1 << uint(i%WordBitSize)
 	}
 }
@@ -65,5 +65,5 @@ func (b Bitset) Unset(i int) {
 // Test returns true if the bit at the given index is set.
 func (b Bitset) Test(i int) bool {
 	w := i / WordBitSize
-	return w < len(b) && ((b[w]>>uint(i%WordBitSize))&1) == 1
+	return i >= 0 && w < len(b) && ((b[w]>>uint(i%WordBitSize))&1) == 1
 }

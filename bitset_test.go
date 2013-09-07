@@ -9,6 +9,7 @@ import (
 
 func TestBitset(t *testing.T) {
 	bs := NewBitset(80)
+	bs.Set(-1)
 	bs.Set(0)
 	bs.Set(2)
 	bs.Set(4)
@@ -19,6 +20,7 @@ func TestBitset(t *testing.T) {
 		Index int
 		Value bool
 	}{
+		{-1, false},
 		{0, true},
 		{1, false},
 		{2, true},
