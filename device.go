@@ -5,8 +5,8 @@ package evdev
 
 import (
 	"fmt"
-	"io"
 	"os"
+	"sync"
 	"unsafe"
 )
 
@@ -14,6 +14,7 @@ const eventBufferSize = 64
 
 // Device represents a single device node.
 type Device struct {
+	wg     sync.WaitGroup
 	fd     *os.File
 	Inbox  chan Event // Channel exposing incoming events.
 	Outbox chan Event // Channel for outgoing events.
@@ -26,6 +27,8 @@ func Open(node string) (dev *Device, err error) {
 	dev.fd, err = os.OpenFile(node, os.O_RDWR, 0)
 	dev.Inbox = make(chan Event, eventBufferSize)
 	dev.Outbox = make(chan Event, 1)
+
+	dev.wg.Add(2)
 	go dev.pollIn()
 	go dev.pollOut()
 	return
@@ -40,6 +43,7 @@ func (d *Device) Close() (err error) {
 
 	close(d.Inbox)
 	close(d.Outbox)
+	d.wg.Wait()
 	return
 }
 
@@ -106,10 +110,10 @@ func (d *Device) SetKeyMap(key, value int) {
 //
 // Refer to Device.SetRepeatState for an explanation on what
 // the returned values mean.
-func (d *Device) RepeatState() (int, int) {
+func (d *Device) RepeatState() (uint, uint) {
 	var rep [2]int32
 	ioctl(d.fd.Fd(), _EVIOCGREP, unsafe.Pointer(&rep[0]))
-	return int(rep[0]), int(rep[1])
+	return uint(rep[0]), uint(rep[1])
 }
 
 // SetRepeatState sets the global repeat state for the given
@@ -126,20 +130,30 @@ func (d *Device) RepeatState() (int, int) {
 // is released.
 //
 // This returns false if the operation failed.
-func (d *Device) SetRepeatState(initial, subsequent int) bool {
-	if initial < 0 {
-		initial = 0
-	}
-
-	if subsequent < 0 {
-		subsequent = 0
-	}
-
+func (d *Device) SetRepeatState(initial, subsequent uint) bool {
 	var rep [2]int32
 	rep[0] = int32(initial)
 	rep[1] = int32(subsequent)
-
 	return ioctl(d.fd.Fd(), _EVIOCSREP, unsafe.Pointer(&rep[0])) == nil
+}
+
+// Axes returns a bitfield indicating which axes are
+// supported by the device.
+func (d *Device) Axes() Bitset {
+	bs := NewBitset(AbsMax)
+	buf := bs.Bytes()
+	ioctl(d.fd.Fd(), _EVIOCGBIT(EvAbsolute, len(buf)), unsafe.Pointer(&buf[0]))
+	return bs
+}
+
+// AbsInfo provides state information for one absolute axis.
+// If you want the global state for a device, you have to call
+// the function for each axis present on the device.
+// See Device.Axes() for details on how find them.
+func (d *Device) AbsInfo(axis int) AbsInfo {
+	var abs AbsInfo
+	ioctl(d.fd.Fd(), _EVIOCGABS(axis), unsafe.Pointer(&abs))
+	return abs
 }
 
 // EventTypes determines the device's capabilities.
@@ -219,6 +233,8 @@ func (d *Device) Id() Id {
 // We can receive many events with a single read.
 // This is why the outgoing event channel has a large buffer.
 func (d *Device) pollIn() {
+	defer d.wg.Done()
+
 	var e Event
 
 	size := int(unsafe.Sizeof(e))
@@ -227,9 +243,6 @@ func (d *Device) pollIn() {
 	for {
 		n, err := d.fd.Read(buf)
 		if err != nil {
-			if err != io.EOF {
-				fmt.Fprintf(os.Stderr, "poll inbox: %v\n", err)
-			}
 			return
 		}
 
@@ -244,6 +257,8 @@ func (d *Device) pollIn() {
 // pollOut polls the outbox for pending messages.
 // These are then sent to the device.
 func (d *Device) pollOut() {
+	defer d.wg.Done()
+
 	var e Event
 	size := int(unsafe.Sizeof(e))
 
@@ -252,9 +267,6 @@ func (d *Device) pollOut() {
 
 		n, err := d.fd.Write(buf)
 		if err != nil {
-			if err != io.EOF {
-				fmt.Fprintf(os.Stderr, "poll outbox: %v\n", err)
-			}
 			return
 		}
 
