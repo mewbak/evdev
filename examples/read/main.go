@@ -4,6 +4,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/jteeuwen/evdev"
 	"os"
@@ -11,12 +12,11 @@ import (
 	"strings"
 )
 
-// Target device. Can be any of the /dev/input/eventXXX nodes
-const Device = "/dev/input/event0"
-
 func main() {
+	node := parseArgs()
+
 	// Create and open our device.
-	dev, err := evdev.Open(Device)
+	dev, err := evdev.Open(node)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		return
@@ -35,7 +35,7 @@ func main() {
 	events := dev.EventTypes()
 
 	// Display all the collected information about our device.
-	fmt.Printf(" Node    : %s\n", Device)
+	fmt.Printf(" Node    : %s\n", node)
 	fmt.Printf(" Name    : %s\n", dev.Name())
 	fmt.Printf(" Path    : %s\n", dev.Path())
 	fmt.Printf(" Serial  : %s\n", dev.Serial())
@@ -144,4 +144,15 @@ func listEvents(mask uint64) string {
 	}
 
 	return strings.Join(list, ", ")
+}
+
+func parseArgs() string {
+	flag.Parse()
+
+	if flag.NArg() == 0 {
+		fmt.Fprintf(os.Stderr, "Usage: %s <node>\n", os.Args[0])
+		os.Exit(1)
+	}
+
+	return flag.Args()[0]
 }
