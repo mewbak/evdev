@@ -56,52 +56,52 @@ func init() {
 
 }
 
-func _EVIOCGNAME(len int) int {
+func _EVIOCGNAME(len int) uintptr {
 	return _IOC(_IOC_READ, 'E', 0x06, len)
 }
 
-func _EVIOCGPHYS(len int) int {
+func _EVIOCGPHYS(len int) uintptr {
 	return _IOC(_IOC_READ, 'E', 0x07, len)
 }
 
-func _EVIOCGUNIQ(len int) int {
+func _EVIOCGUNIQ(len int) uintptr {
 	return _IOC(_IOC_READ, 'E', 0x08, len)
 }
 
-func _EVIOCGPROP(len int) int {
+func _EVIOCGPROP(len int) uintptr {
 	return _IOC(_IOC_READ, 'E', 0x09, len)
 }
 
-func _EVIOCGMTSLOTS(len int) int {
+func _EVIOCGMTSLOTS(len int) uintptr {
 	return _IOC(_IOC_READ, 'E', 0x0a, len)
 }
 
-func _EVIOCGKEY(len int) int {
+func _EVIOCGKEY(len int) uintptr {
 	return _IOC(_IOC_READ, 'E', 0x18, len)
 }
 
-func _EVIOCGLED(len int) int {
+func _EVIOCGLED(len int) uintptr {
 	return _IOC(_IOC_READ, 'E', 0x19, len)
 }
 
-func _EVIOCGSND(len int) int {
+func _EVIOCGSND(len int) uintptr {
 	return _IOC(_IOC_READ, 'E', 0x1a, len)
 }
 
-func _EVIOCGSW(len int) int {
+func _EVIOCGSW(len int) uintptr {
 	return _IOC(_IOC_READ, 'E', 0x1b, len)
 }
 
-func _EVIOCGBIT(ev, len int) int {
+func _EVIOCGBIT(ev, len int) uintptr {
 	return _IOC(_IOC_READ, 'E', 0x20+ev, len)
 }
 
-func _EVIOCGABS(abs int) int {
+func _EVIOCGABS(abs int) uintptr {
 	var v AbsInfo
 	return _IOR('E', 0x40+abs, int(unsafe.Sizeof(v)))
 }
 
-func _EVIOCSABS(abs int) int {
+func _EVIOCSABS(abs int) uintptr {
 	var v AbsInfo
 	return _IOW('E', 0xc0+abs, int(unsafe.Sizeof(v)))
 }

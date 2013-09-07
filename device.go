@@ -49,7 +49,7 @@ func (d *Device) Close() (err error) {
 func (d *Device) KeyState() Bitset {
 	bs := NewBitset(KeyMax)
 	buf := bs.Bytes()
-	ioctl(d.fd.Fd(), uintptr(_EVIOCGKEY(len(buf))), unsafe.Pointer(&buf[0]))
+	ioctl(d.fd.Fd(), _EVIOCGKEY(len(buf)), unsafe.Pointer(&buf[0]))
 	return bs
 }
 
@@ -59,8 +59,17 @@ func (d *Device) KeyState() Bitset {
 func (d *Device) LEDState() Bitset {
 	bs := NewBitset(LedMax)
 	buf := bs.Bytes()
-	ioctl(d.fd.Fd(), uintptr(_EVIOCGLED(len(buf))), unsafe.Pointer(&buf[0]))
+	ioctl(d.fd.Fd(), _EVIOCGLED(len(buf)), unsafe.Pointer(&buf[0]))
 	return bs
+}
+
+// RepeatState returns the current, global repeat state.
+// This applies only to devices which have the EvRepeat capability defined.
+// This can be determined through `Device.EventTypes()`.
+func (d *Device) RepeatState() [2]uint32 {
+	var rep [2]uint32
+	ioctl(d.fd.Fd(), _EVIOCGREP, unsafe.Pointer(&rep[0]))
+	return rep
 }
 
 // EventTypes determines the device's capabilities.
@@ -69,14 +78,14 @@ func (d *Device) LEDState() Bitset {
 func (d *Device) EventTypes() Bitset {
 	bs := NewBitset(EvMax)
 	buf := bs.Bytes()
-	ioctl(d.fd.Fd(), uintptr(_EVIOCGBIT(0, EvMax)), unsafe.Pointer(&buf[0]))
+	ioctl(d.fd.Fd(), _EVIOCGBIT(0, EvMax), unsafe.Pointer(&buf[0]))
 	return bs
 }
 
 // Name returns the name of the device.
 func (d *Device) Name() string {
 	var str [256]byte
-	ioctl(d.fd.Fd(), uintptr(_EVIOCGNAME(256)), unsafe.Pointer(&str[0]))
+	ioctl(d.fd.Fd(), _EVIOCGNAME(256), unsafe.Pointer(&str[0]))
 	return string(str[:])
 }
 
@@ -103,7 +112,7 @@ func (d *Device) Name() string {
 // the multimedia function keys on a second interface.
 func (d *Device) Path() string {
 	var str [256]byte
-	ioctl(d.fd.Fd(), uintptr(_EVIOCGPHYS(256)), unsafe.Pointer(&str[0]))
+	ioctl(d.fd.Fd(), _EVIOCGPHYS(256), unsafe.Pointer(&str[0]))
 	return string(str[:])
 }
 
@@ -111,7 +120,7 @@ func (d *Device) Path() string {
 // Most devices do not have this and will return an empty string.
 func (d *Device) Serial() string {
 	var str [256]byte
-	ioctl(d.fd.Fd(), uintptr(_EVIOCGUNIQ(256)), unsafe.Pointer(&str[0]))
+	ioctl(d.fd.Fd(), _EVIOCGUNIQ(256), unsafe.Pointer(&str[0]))
 	return string(str[:])
 }
 
