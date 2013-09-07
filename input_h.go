@@ -563,7 +563,7 @@ const (
 //     SC - System Control
 const (
 	KeyReserved         = 0
-	KeyEsc              = 1
+	KeyEscape           = 1
 	Key1                = 2
 	Key2                = 3
 	Key3                = 4
