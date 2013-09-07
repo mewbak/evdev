@@ -156,13 +156,13 @@ func (d *Device) AbsInfo(axis int) AbsInfo {
 	return abs
 }
 
-// FFCaps returns a bitset which specified the kind of Force Feedback
+// ForceFeedbackCaps returns a bitset which specified the kind of Force Feedback
 // effects supported by this device. The bits can be compared against
 // the FFXXX constants. Additionally, it returns the number of effects
 // this device can handle simultaneously.
 //
 // This is only applicable to devices with the EvForceFeedback event type set.
-func (d *Device) FFCaps() (int, Bitset) {
+func (d *Device) ForceFeedbackCaps() (int, Bitset) {
 	bs := NewBitset(24)
 	buf := bs.Bytes()
 	ioctl(d.fd.Fd(), _EVIOCGBIT(EvForceFeedback, len(buf)), unsafe.Pointer(&buf[0]))
@@ -170,6 +170,31 @@ func (d *Device) FFCaps() (int, Bitset) {
 	var count int32
 	ioctl(d.fd.Fd(), _EVIOCGEFFECTS, unsafe.Pointer(&count))
 	return int(count), bs
+}
+
+// Supports determines if the device supports the specified
+// event types. E.g.: EvKey, EvAbsolute, etc.
+//
+// It returns true only if the device supports all the supplied
+// event types.
+func (d *Device) Supports(etype ...int) bool {
+	events := d.EventTypes()
+
+	for i := range etype {
+		for n := 0; n < events.Len(); n++ {
+			if n == etype[i] && events.Test(n) {
+				etype[i] = -1
+			}
+		}
+	}
+
+	for i := range etype {
+		if etype[i] > 0 {
+			return false
+		}
+	}
+
+	return true
 }
 
 // EventTypes determines the device's capabilities.
