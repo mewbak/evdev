@@ -12,7 +12,6 @@ import (
 	"time"
 )
 
-// Target device. Can be any of the /dev/input/eventXXX nodes
 const Timeout = 200 * time.Millisecond
 
 func main() {
