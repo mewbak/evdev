@@ -66,8 +66,8 @@ good to keep in mind:
   exactly what the change does and why. If it fixes a known issue,
   then mention the issue number in the commit log. E.g.:
   
-      Fixes return value for foo/boo.Baz() to be consistent with
-      the rest of the API. This addresses issue #32
+  > Fixes return value for `foo/boo.Baz()` to be consistent with
+  > the rest of the API. This addresses issue #32
   
   Do not pile a lot of unrelated changes into a single commit.
   Pick and chose only those changes for a single commit, which are
