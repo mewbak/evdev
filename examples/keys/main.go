@@ -34,7 +34,7 @@ func main() {
 	ks := dev.KeyState()
 	listState(ks)
 
-	<-time.After(1e9)
+	<-time.After(1e8)
 }
 
 // hasKeys determines if the given device supports key/button state events.
