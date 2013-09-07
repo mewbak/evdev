@@ -88,12 +88,13 @@ func (d *Device) pollOut() {
 }
 
 // EventTypes determines the device's capabilities.
-// It yields a bit mask which can be tested for against
+// It yields a bitset which can be tested for against
 // EvXXX constants to determine which types are supported.
-func (d *Device) EventTypes() uint64 {
-	var bitmask uint64
-	ioctl(d.fd.Fd(), uintptr(_EVIOCGBIT(0, 8)), unsafe.Pointer(&bitmask))
-	return bitmask
+func (d *Device) EventTypes() Bitset {
+	bs := NewBitset((EvMax + 7) / 8)
+	buf := bs.Bytes()
+	ioctl(d.fd.Fd(), uintptr(_EVIOCGBIT(0, EvMax)), unsafe.Pointer(&buf[0]))
+	return bs
 }
 
 // Name returns the name of the device.

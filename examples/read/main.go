@@ -31,7 +31,7 @@ func main() {
 	// Fetch device identity.
 	id := dev.Id()
 
-	// Fetch the bitmask, specifying the supported event types.
+	// Fetch the bitset, specifying the supported event types.
 	events := dev.EventTypes()
 
 	// Fetch device name.
@@ -116,11 +116,11 @@ func busName(bus uint16) string {
 }
 
 // listEvents lists the event types supported by the device.
-func listEvents(mask uint64) string {
+func listEvents(bs evdev.Bitset) string {
 	var list []string
 
 	for n := uint(0); n < evdev.EvMax; n++ {
-		if (mask>>n)&1 == 0 {
+		if !bs.Test(n) {
 			continue
 		}
 
