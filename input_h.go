@@ -280,12 +280,12 @@ type Id struct {
 }
 
 type AbsInfo struct {
-	Value      int32
-	Minimum    int32
-	Maximum    int32
-	Fuzz       int32
-	Flat       int32
-	Resolution int32
+	Value      int32 // Current value of the axis,
+	Minimum    int32 // Lower limit of axis.
+	Maximum    int32 // Upper limit of axis.
+	Fuzz       int32 // ???
+	Flat       int32 // Size of the 'flat' section.
+	Resolution int32 // Size of the error that may be present.
 }
 
 type KeymapEntry struct {
