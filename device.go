@@ -4,6 +4,7 @@
 package evdev
 
 import (
+	"fmt"
 	"os"
 	"unsafe"
 )
@@ -21,9 +22,9 @@ type Device struct {
 // This can be anything listed in /dev/input/event[x].
 func Open(node string) (dev *Device, err error) {
 	dev = new(Device)
-	dev.fd, err = os.Open(node)
+	dev.fd, err = os.OpenFile(node, os.O_RDWR, 0)
 	dev.Inbox = make(chan Event, eventBufferSize)
-	dev.Outbox = make(chan Event, eventBufferSize>>1)
+	dev.Outbox = make(chan Event, 1)
 	go dev.pollIn()
 	go dev.pollOut()
 	return
@@ -53,6 +54,7 @@ func (d *Device) pollIn() {
 	for {
 		n, err := d.fd.Read(buf)
 		if err != nil {
+			fmt.Fprintf(os.Stderr, "poll inbox: %v\n", err)
 			return
 		}
 
@@ -73,9 +75,14 @@ func (d *Device) pollOut() {
 	for msg := range d.Outbox {
 		buf := (*(*[1<<31 - 1]byte)(unsafe.Pointer(&msg)))[:size]
 
-		_, err := d.fd.Write(buf)
+		n, err := d.fd.Write(buf)
 		if err != nil {
+			fmt.Fprintf(os.Stderr, "poll outbox: %v\n", err)
 			return
+		}
+
+		if n < size {
+			fmt.Fprintf(os.Stderr, "poll outbox: short write\n")
 		}
 	}
 }

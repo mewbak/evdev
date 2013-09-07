@@ -442,19 +442,19 @@ const (
 
 // LEDs
 const (
-	LedNumL     = 0x00
-	LedCapsL    = 0x01
-	LedScrollL  = 0x02
-	LedCompose  = 0x03
-	LedKana     = 0x04
-	LedSleep    = 0x05
-	LedSuspend  = 0x06
-	LedMute     = 0x07
-	LedMisc     = 0x08
-	LedMail     = 0x09
-	LedCharging = 0x0a
-	LedMax      = 0x0f
-	LedCount    = LedMax + 1
+	LedNumLock    = 0x00
+	LedCapsLock   = 0x01
+	LedScrollLock = 0x02
+	LedCompose    = 0x03
+	LedKana       = 0x04
+	LedSleep      = 0x05
+	LedSuspend    = 0x06
+	LedMute       = 0x07
+	LedMisc       = 0x08
+	LedMail       = 0x09
+	LedCharging   = 0x0a
+	LedMax        = 0x0f
+	LedCount      = LedMax + 1
 )
 
 // Autorepeat values
