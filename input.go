@@ -3,6 +3,13 @@
 
 package evdev
 
+// Multitouch tools
+const (
+	MtToolFinger = 0
+	MtToolPen    = 1
+	MtToolMax    = 1
+)
+
 // Input device properties and quirks.
 //
 // Normally, userspace sets up an input device based on the data it emits,
@@ -61,11 +68,4 @@ const (
 
 	InputPropMax   = 0x1f
 	InputPropCount = InputPropMax + 1
-)
-
-// Multitouch tools
-const (
-	MtToolFinger = 0
-	MtToolPen    = 1
-	MtToolMax    = 1
 )

@@ -9,13 +9,6 @@ mapped to `/dev/input/event[X]`.
 
 ### TODO
 
-* Handle EvSwitch (switch) events.
-* Handle EvSync (Synchronization) events.
-* Handle EVMisc (Miscellaneous) events.
-* Handle EvSound (Sound) events.
-* Handle EvPower (Power management) events.
-* Handling of relative axis information seems incomplete.
-  Find some documentation on the subject to verify.
 * Better error handling. The `Device` type now mostly ignores
   ioctl errors once the device has been successfuly opened.
   This is done to simplify the API. Some of the `SetXXX` methods

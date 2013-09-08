@@ -5,7 +5,14 @@ package evdev
 
 import "unsafe"
 
-// Relative axes
+// Relative events describe relative changes in a property.
+// For example, a mouse may move to the left by a certain
+// number of units, but its absolute position in space is unknown.
+// If the absolute position is known, EvAbsolute codes should be used
+// instead of EvRelative codes.
+//
+// RelWheel and RelHWheel are used for vertical and horizontal scroll
+// wheels, respectively.
 const (
 	RelX      = 0x00
 	RelY      = 0x01
@@ -31,5 +38,3 @@ func (d *Device) RelativeAxes() Bitset {
 	ioctl(d.fd.Fd(), _EVIOCGBIT(EvRelative, len(buf)), unsafe.Pointer(&buf[0]))
 	return bs
 }
-
-// TODO(jimt): Do we need to implement more stuff related to relative axes?

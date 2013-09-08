@@ -5,7 +5,18 @@ package evdev
 
 import "unsafe"
 
-// Absolute axes
+// Absolute events describe absolute changes in a property.
+// For example, a touchpad may emit coordinates for a touch location.
+// A few codes have special meanings:
+//
+// AbsDistance is used to describe the distance of a tool
+// from an interaction surface. This event should only be emitted
+// while the tool is hovering, meaning in close proximity to the
+// device and while the value of the BtnTouch code is 0.
+// If the input device may be used freely in three dimensions,
+// consider AbsZ instead.
+//
+// AbsMt<name> is used to describe multitouch input events.
 const (
 	AbsX             = 0x00
 	AbsY             = 0x01
