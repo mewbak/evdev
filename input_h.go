@@ -192,11 +192,14 @@ type Effect struct {
 //    FFPeriodic -> PeriodicEffect
 //    FFRamp     -> RampEffect
 //    FFRumble   -> RumbleEffect
+//    FFSpring   -> [2]ConditionEffect
+//    FFDamper   -> [2]ConditionEffect
 //    FFCustom   -> unsafe.Pointer
 //
 // This returns nil if the type was not recognized.
 func (e *Effect) Data() interface{} {
-	// FIXME(jimt): Deal with: FFSpring, FFFriction, FFDamper, FFInertia:
+	// FIXME(jimt): Deal with: FFFriction, FFInertia:
+	// Unsure what they should return.
 
 	if e.data == nil {
 		return nil
@@ -211,6 +214,8 @@ func (e *Effect) Data() interface{} {
 		return *(*RampEffect)(e.data)
 	case FFRumble:
 		return *(*RumbleEffect)(e.data)
+	case FFSpring, FFDamper:
+		return *(*[2]ConditionEffect)(e.data)
 	case FFCustom:
 		return e.data // Let the host deal with this one.
 	}
@@ -218,37 +223,16 @@ func (e *Effect) Data() interface{} {
 	return nil
 }
 
-// SetData sets the event data structure and determines the appropriate Effect.Type value.
-//
-//    ConstantEffect -> FFConstant
-//    PeriodicEffect -> FFPeriodic
-//    RampEffect     -> FFRamp
-//    RumbleEffect   -> FFRumble
-//    <other>        -> FFCustom
-//
-// Any unrecognized type is assigned the FFCustom type.
+// SetData sets the event data structure.
 func (e *Effect) SetData(v interface{}) {
-	if v == nil {
-		return
-	}
-
-	// FIXME(jimt): Deal with: FFSpring, FFFriction, FFDamper, FFInertia:
-	e.data = unsafe.Pointer(&v)
-
-	switch v.(type) {
-	case ConstantEffect:
-		e.Type = FFConstant
-	case PeriodicEffect:
-		e.Type = FFPeriodic
-	case RampEffect:
-		e.Type = FFRamp
-	case RumbleEffect:
-		e.Type = FFRumble
-	default:
-		e.Type = FFCustom
+	if v != nil {
+		e.data = unsafe.Pointer(&v)
 	}
 }
 
+// The rumble effect is the most basic effect, it lets the
+// device vibrate. The API contains support for two motors,
+// a strong one and a weak one, which can be controlled independently.
 type RumbleEffect struct {
 	StrongMagnitude uint16
 	WeakMagnitude   uint16
