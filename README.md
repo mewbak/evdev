@@ -9,7 +9,7 @@ mapped to `/dev/input/event[X]`.
 
 ### Known issues
 
-### Force Feedback
+#### Force Feedback
 
 Not all of the force feedback API is implemented.
 The documentation on this is pretty flaky, so it may take a while.
