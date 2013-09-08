@@ -17,13 +17,19 @@ mapped to `/dev/input/event[X]`.
   do return a boolean value to indicate success/failure, but
   this is not consistently applied. Some of them work by
   sending an `Event` struct to the device by queueing it
-  in the `Device.Outbox` channel. Which then processes it in
-  a separate goroutine. We can currently not receive any
-  return values from such an operation. This includes
-  possible errors. Should we implement some sort of synchronous
-  call mechanism for these kind of writes? Ideally we do want
-  to keep all of the writes contained in the same
-  goroutine (see `Device.pollOutbox`).
+  in the `Device.Outbox` channel. Which in turn is processed in
+  a separate goroutine (see `Device.pollOutbox`).
+  
+  We can currently not receive any return values from such
+  an operation. This includes possible errors. Should we
+  implement some sort of synchronous call mechanism for
+  these kind of writes? Ideally we do want to keep all
+  of the writes confined to the same goroutine.
+  
+  We do not necessarily need an actual error value, just
+  a boolean indicating success or failure.
+  ioctl errors are usually very non-descriptive anyway,
+  so there is little point in passing them around.
 
 
 ### Known issues
