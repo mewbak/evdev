@@ -10,6 +10,8 @@ import (
 
 // <linux/input.h>
 
+// https://github.com/mirrors/linux-2.6/blob/f3b8436ad9a8ad36b3c9fa1fe030c7f38e5d3d0b/Documentation/input/ff.txt
+
 var (
 	_EVIOCGVERSION    uintptr
 	_EVIOCGID         uintptr
@@ -128,17 +130,20 @@ type Envelope struct {
 	FadeLevel    uint16
 }
 
+// ConstantEffect renders constant force-feedback effects.
 type ConstantEffect struct {
 	Level    int16
 	Envelope Envelope
 }
 
+// RampEffect renders ramp force-feedback effects.
 type RampEffect struct {
 	StartLevel int16
 	EndLevel   int16
 	Envelope   Envelope
 }
 
+// ConditionEffect represents a confitional force feedback effect.
 type ConditionEffect struct {
 	RightSaturation uint16
 	LeftSaturation  uint16
@@ -148,6 +153,9 @@ type ConditionEffect struct {
 	Center          int16
 }
 
+// PeriodicEffect renders periodic force-feedback effects with
+// the following waveforms: Square, Triangle, Sine, Sawtooth
+// or a custom waveform.
 type PeriodicEffect struct {
 	Waveform  uint16
 	Period    uint16
@@ -160,6 +168,11 @@ type PeriodicEffect struct {
 	custom_data unsafe.Pointer // *int16
 }
 
+// Data returns custom waveform information.
+// This comes in the form of a signed 16-bit slice.
+//
+// The exact layout of a custom waveform is undefined for the
+// time being as no driver supports it yet.
 func (e *PeriodicEffect) Data() []int16 {
 	if e.custom_data == nil {
 		return nil
@@ -167,6 +180,10 @@ func (e *PeriodicEffect) Data() []int16 {
 	return (*(*[1<<31 - 1]int16)(e.custom_data))[:e.custom_len]
 }
 
+// SetData sets custom waveform information.
+//
+// The exact layout of a custom waveform is undefined for the
+// time being as no driver supports it yet.
 func (e *PeriodicEffect) SetData(v []int16) {
 	e.custom_len = uint32(len(v))
 	e.custom_data = unsafe.Pointer(nil)
@@ -176,6 +193,35 @@ func (e *PeriodicEffect) SetData(v []int16) {
 	}
 }
 
+/*
+Effect describes any of the supported Force Feedback effects.
+
+Supported effects are as follows:
+
+	- FF_CONSTANT	    Renders constant force effects
+	- FF_PERIODIC	    Renders periodic effects with the following waveforms:
+	  - FF_SQUARE	    Square waveform
+	  - FF_TRIANGLE	    Triangle waveform
+	  - FF_SINE	        Sine waveform
+	  - FF_SAW_UP	    Sawtooth up waveform
+	  - FF_SAW_DOWN	    Sawtooth down waveform
+	  - FF_CUSTOM	    Custom waveform
+	- FF_RAMP           Renders ramp effects
+	- FF_SPRING         Simulates the presence of a spring
+	- FF_FRICTION	    Simulates friction
+	- FF_DAMPER         Simulates damper effects
+	- FF_RUMBLE         Rumble effects
+	- FF_INERTIA        Simulates inertia
+	- FF_GAIN           Gain is adjustable
+	- FF_AUTOCENTER     Autocenter is adjustable
+
+Note: In most cases you should use FF_PERIODIC instead of FF_RUMBLE. All
+      devices that support FF_RUMBLE support FF_PERIODIC (square, triangle,
+      sine) and the other way around.
+
+Note: The exact syntax FF_CUSTOM is undefined for the time being as no driver
+      supports it yet.
+*/
 type Effect struct {
 	Type      uint16
 	Id        int16
@@ -238,6 +284,7 @@ type RumbleEffect struct {
 	WeakMagnitude   uint16
 }
 
+// Event represents a generic input event.
 type Event struct {
 	Time  syscall.Timeval
 	Type  uint16
@@ -263,6 +310,8 @@ type Id struct {
 	Version uint16
 }
 
+// AbsInfo provides information for a specific absolute axis.
+// This applies to devices which support EvAbsolute events.
 type AbsInfo struct {
 	Value      int32 // Current value of the axis,
 	Minimum    int32 // Lower limit of axis.
