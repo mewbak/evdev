@@ -128,7 +128,7 @@ func listEvents(set evdev.Bitset) string {
 		switch n {
 		case evdev.EvSync:
 			list = append(list, "Sync Events")
-		case evdev.EvKey:
+		case evdev.EvKeys:
 			list = append(list, "Keys or Buttons")
 		case evdev.EvRelative:
 			list = append(list, "Relative Axes")
@@ -147,7 +147,7 @@ func listEvents(set evdev.Bitset) string {
 			list = append(list, "Force Feedback")
 		case evdev.EvPower:
 			list = append(list, "Power Management")
-		case evdev.EvSw:
+		case evdev.EvSwitch:
 			list = append(list, "Binary switches")
 		default:
 			list = append(list, fmt.Sprintf("Unknown (0x%02x)", n))
