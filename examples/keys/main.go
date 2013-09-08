@@ -24,7 +24,7 @@ func main() {
 	defer dev.Close()
 
 	// Ensure this device supports key/button events.
-	if !dev.SupportsEvent(evdev.EvKey) {
+	if !dev.Supports(dev.EventTypes(), evdev.EvKey) {
 		fmt.Fprintf(os.Stderr, "Device %q does not support key/button events.\n", node)
 		return
 	}
