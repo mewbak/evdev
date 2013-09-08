@@ -25,7 +25,7 @@ func main() {
 	defer dev.Close()
 
 	// Ensure this device supports the needed event types.
-	if !dev.Supports(dev.EventTypes(), evdev.EvForceFeedback, evdev.EvForceFeedbackStatus) {
+	if !dev.Test(dev.EventTypes(), evdev.EvForceFeedback, evdev.EvForceFeedbackStatus) {
 		fmt.Fprintf(os.Stderr, "Device %q does not support force feedback events.\n", node)
 		return
 	}
@@ -90,15 +90,15 @@ func setEffects(dev *evdev.Device) {
 	// the device must support a given effect type.
 
 	switch {
-	case dev.Supports(caps, evdev.FFRumble):
+	case dev.Test(caps, evdev.FFRumble):
 		rumble(&effect)
-	case dev.Supports(caps, evdev.FFPeriodic):
+	case dev.Test(caps, evdev.FFPeriodic):
 		periodic(&effect)
-	case dev.Supports(caps, evdev.FFConstant):
+	case dev.Test(caps, evdev.FFConstant):
 		constant(&effect)
-	case dev.Supports(caps, evdev.FFSpring):
+	case dev.Test(caps, evdev.FFSpring):
 		spring(&effect)
-	case dev.Supports(caps, evdev.FFDamper):
+	case dev.Test(caps, evdev.FFDamper):
 		damper(&effect)
 	}
 

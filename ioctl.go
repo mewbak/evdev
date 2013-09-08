@@ -34,7 +34,6 @@ func ioctl(fd, name uintptr, data interface{}) error {
 	return errno
 }
 
-
 var (
 	_EVIOCGVERSION    uintptr
 	_EVIOCGID         uintptr

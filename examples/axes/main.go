@@ -24,8 +24,8 @@ func main() {
 	defer dev.Close()
 
 	events := dev.EventTypes()
-	abs := dev.Supports(events, evdev.EvAbsolute)
-	rel := dev.Supports(events, evdev.EvRelative)
+	abs := dev.Test(events, evdev.EvAbsolute)
+	rel := dev.Test(events, evdev.EvRelative)
 
 	if !abs && !rel {
 		fmt.Fprintf(os.Stderr, "Device %q does not support relative or absolute axes.\n", node)

@@ -64,23 +64,23 @@ func (d *Device) Release() bool {
 	return ioctl(d.fd.Fd(), _EVIOCGRAB, 0) == nil
 }
 
-// Supports takes a bitset and a list of constants
+// Test takes a bitset and a list of constants
 // and tests one against the other to see if the device
 // supports a given set of properties.
 //
 // It returns true only if the bitset defines all the supplied types.
 // E.g.: To test for certain event types:
 //
-//     if dev.Supports(dev.EventTypes(), EvKey, EvRepeat) {
+//     if dev.Test(dev.EventTypes(), EvKey, EvRepeat) {
 //
 // To test for certain absolute axes:
 //
-//     if dev.Supports(dev.AbsoluteAxes(), AbsX, AbsY, AbsZ) {
+//     if dev.Test(dev.AbsoluteAxes(), AbsX, AbsY, AbsZ) {
 //
 // To test for certain relative axes:
 //
-//     if dev.Supports(dev.RelativeAxes(), RelX, RelY, RelZ) {
-func (d *Device) Supports(set Bitset, values ...int) bool {
+//     if dev.Test(dev.RelativeAxes(), RelX, RelY, RelZ) {
+func (d *Device) Test(set Bitset, values ...int) bool {
 	var count int
 
 	for i := range values {
