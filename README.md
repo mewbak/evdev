@@ -7,13 +7,26 @@ It allows a Go application to track events from any devices
 mapped to `/dev/input/event[X]`.
 
 
+### TODO
+
+* Handling of relative axis information seems incomplete.
+  Find some documentation on the subject to verify.
+* Better error handling. The `Device` type now mostly ignores
+  ioctl errors once the device has been successfuly opened.
+  This is done to simplify the API. Some of the `SetXXX` methods
+  do return a boolean value to indicate success/failure, but
+  this is not consistently applied. Some of them work by
+  sending an `Event` struct to the device by queueing it
+  in the `Device.Outbox` channel. Which then processes it in
+  a separate goroutine. We can currently not receive any
+  return values from such an operation. This includes
+  possible errors. Should we implement some sort of synchronous
+  call mechanism for these kind of writes? Ideally we do want
+  to keep all of the writes contained in the same
+  goroutine (see `Device.pollOutbox`).
+
+
 ### Known issues
-
-#### Force Feedback
-
-Not all of the force feedback API is implemented.
-The documentation on this is pretty flaky, so it may take a while.
-
 
 #### Permissions
 
