@@ -1,7 +1,7 @@
 ## Force Feedback
 
 This program demonstrates how to handle Force Feedback effects
-on a device.
+and events on a device.
 
 
 ### Usage

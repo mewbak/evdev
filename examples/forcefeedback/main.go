@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/jteeuwen/evdev"
 	"os"
+	"os/signal"
 )
 
 func main() {
@@ -29,11 +30,45 @@ func main() {
 		return
 	}
 
+	// Set effect gain factor, to ensure the effect strength is
+	// the same on all FF devices we may be working with.
+	dev.SetEffectGain(75) // 75%
+
 	// List Force Feedback capabilities
 	listCapabilities(dev)
 
 	// Create, upload and play some effects.
 	setEffects(dev)
+
+	// Wait for incoming events or exit signals.
+	poll(dev)
+}
+
+// poll waits for incoming events or exit signals.
+//
+// Events are triggered whenever an effect's state is altered.
+// This only applies to devices with EvForceFeedbackStatus support.
+func poll(dev *evdev.Device) {
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, os.Interrupt, os.Kill)
+
+	for {
+		select {
+		case <-signals:
+			return
+
+		case evt := <-dev.Inbox:
+			if evt.Type != evdev.EvForceFeedbackStatus {
+				continue
+			}
+
+			if evt.Value == evdev.FFStatusStopped {
+				fmt.Printf("%v effect %d is now stopped\n", evt.Time, evt.Code)
+			} else {
+				fmt.Printf("%v effect %d is now playing\n", evt.Time, evt.Code)
+			}
+		}
+	}
 }
 
 // setEffects creates, uploads and plays a new Force feedback effect.

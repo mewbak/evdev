@@ -81,34 +81,23 @@ func (d *Device) Release() bool {
 //
 //     if dev.Supports(dev.RelativeAxes(), RelX, RelY, RelZ) {
 func (d *Device) Supports(set Bitset, values ...int) bool {
+	var count int
+
 	for i := range values {
 		for n := 0; n < set.Len(); n++ {
 			if n == values[i] && set.Test(n) {
-				values[i] = -1
+				count++
 				break
 			}
 		}
 	}
 
-	// If all the requested values have been
-	// found to have their respective bits set,
-	// their value has been changed to -1.
-	//
-	// If this is not the case, we know or
-	// more of the values are not defined and
-	// we fail this call.
-	for i := range values {
-		if values[i] > 0 {
-			return false
-		}
-	}
-
-	return true
+	return count == len(values)
 }
 
 // Keystate returns the current,global key- and button- states.
-// This applies only to devices which have the EvKey capability defined.
-// This can be determined through `Device.EventTypes()`.
+//
+// This is only applicable to devices with EvKey event support.
 func (d *Device) KeyState() Bitset {
 	bs := NewBitset(KeyMax)
 	buf := bs.Bytes()
@@ -117,8 +106,8 @@ func (d *Device) KeyState() Bitset {
 }
 
 // LEDState returns the current, global LED state.
-// This applies only to devices which have the EvLed capability defined.
-// This can be determined through `Device.EventTypes()`.
+//
+// This is only applicable to devices with EvLed event support.
 func (d *Device) LEDState() Bitset {
 	bs := NewBitset(LedMax)
 	buf := bs.Bytes()
@@ -169,6 +158,8 @@ func (d *Device) SetKeyMap(key, value int) bool {
 //
 // Refer to Device.SetRepeatState for an explanation on what
 // the returned values mean.
+//
+// This is only applicable to devices with EvRepeat event support.
 func (d *Device) RepeatState() (uint, uint) {
 	var rep [2]int32
 	ioctl(d.fd.Fd(), _EVIOCGREP, unsafe.Pointer(&rep[0]))
@@ -189,6 +180,8 @@ func (d *Device) RepeatState() (uint, uint) {
 // is released.
 //
 // This returns false if the operation failed.
+//
+// This is only applicable to devices with EvRepeat event support.
 func (d *Device) SetRepeatState(initial, subsequent uint) bool {
 	var rep [2]int32
 	rep[0] = int32(initial)
@@ -198,6 +191,8 @@ func (d *Device) SetRepeatState(initial, subsequent uint) bool {
 
 // AbsoluteAxes returns a bitfield indicating which absolute axes are
 // supported by the device.
+//
+// This is only applicable to devices with EvAbsolute event support.
 func (d *Device) AbsoluteAxes() Bitset {
 	bs := NewBitset(AbsMax)
 	buf := bs.Bytes()
@@ -209,6 +204,8 @@ func (d *Device) AbsoluteAxes() Bitset {
 // If you want the global state for a device, you have to call
 // the function for each axis present on the device.
 // See Device.Axes() for details on how find them.
+//
+// This is only applicable to devices with EvAbsolute event support.
 func (d *Device) AbsoluteInfo(axis int) AbsInfo {
 	var abs AbsInfo
 	ioctl(d.fd.Fd(), _EVIOCGABS(axis), unsafe.Pointer(&abs))
@@ -217,6 +214,8 @@ func (d *Device) AbsoluteInfo(axis int) AbsInfo {
 
 // RelativeAxes returns a bitfield indicating which relative axes are
 // supported by the device.
+//
+// This is only applicable to devices with EvRelative event support.
 func (d *Device) RelativeAxes() Bitset {
 	bs := NewBitset(RelMax)
 	buf := bs.Bytes()
@@ -231,7 +230,7 @@ func (d *Device) RelativeAxes() Bitset {
 // the FFXXX constants. Additionally, it returns the number of effects
 // this device can handle simultaneously.
 //
-// This is only applicable to devices with the EvForceFeedback event type set.
+// This is only applicable to devices with EvForceFeedback event support.
 func (d *Device) ForceFeedbackCaps() (int, Bitset) {
 	bs := NewBitset(24)
 	buf := bs.Bytes()
@@ -252,7 +251,7 @@ func (d *Device) ForceFeedbackCaps() (int, Bitset) {
 // id later on with new parameters. This allows us to update a
 // running effect, without first stopping it.
 //
-// This is only applicable to devices with the EvForceFeedback event type set.
+// This is only applicable to devices with EvForceFeedback event support.
 func (d *Device) SetEffects(list ...*Effect) bool {
 	for _, effect := range list {
 		err := ioctl(d.fd.Fd(), _EVIOCSFF, unsafe.Pointer(effect))
@@ -265,8 +264,10 @@ func (d *Device) SetEffects(list ...*Effect) bool {
 }
 
 // UnsetEffects deletes the given effects from the device.
+// This makes room for new effects in the device's memory.
+// Note that this also stops the effect if it was playing.
 //
-// This is only applicable to devices with the EvForceFeedback event type set.
+// This is only applicable to devices with EvForceFeedback event support.
 func (d *Device) UnsetEffects(list ...*Effect) bool {
 	for _, effect := range list {
 		err := ioctl(d.fd.Fd(), _EVIOCRMFF, int(effect.Id))
@@ -278,18 +279,60 @@ func (d *Device) UnsetEffects(list ...*Effect) bool {
 	return true
 }
 
+// SetEffectGain changes the force feedback gain.
+//
+// Not all devices have the same effect strength. Therefore,
+// users should set a gain factor depending on how strong they
+// want effects to be. This setting is persistent across
+// access to the driver.
+//
+// The specified gain should be in the range 0-100.
+// This is only applicable to devices with EvForceFeedback event support.
+func (d *Device) SetEffectGain(gain int) {
+	d.setEffectFactor(gain, FFGain)
+}
+
+// SetEffectAutoCenter changes the force feedback autocenter factor.
+// The specified factor should be in the range 0-100.
+// A value of 0 means: no autocenter.
+//
+// This is only applicable to devices with EvForceFeedback event support.
+func (d *Device) SetEffectAutoCenter(factor int) {
+	d.setEffectFactor(factor, FFAutoCenter)
+}
+
+// setEffectFactor changes the given effect factor.
+// E.g.: FFAutoCenter or FFGain.
+//
+// This is only applicable to devices with EvForceFeedback event support.
+func (d *Device) setEffectFactor(factor int, code uint16) {
+	if factor < 0 {
+		factor = 0
+	}
+
+	if factor > 100 {
+		factor = 100
+	}
+
+	var e Event
+	e.Type = EvForceFeedback
+	e.Code = code
+	e.Value = 0xffff * int32(factor) / 100
+	d.Outbox <- e
+}
+
 // PlayEffect plays a previously uploaded effect.
 func (d *Device) PlayEffect(id int16) {
-	d.ToggleEffect(id, true)
+	d.toggleEffect(id, true)
 }
 
 // StopEffect stops a previously uploaded effect from playing.
 func (d *Device) StopEffect(id int16) {
-	d.ToggleEffect(id, false)
+	d.toggleEffect(id, false)
 }
 
 // ToggleEffect plays or stops a previously uploaded effect with the given id.
-func (d *Device) ToggleEffect(id int16, play bool) {
+func (d *Device) toggleEffect(id int16, play bool) {
 	var e Event
 	e.Type = EvForceFeedback
 	e.Code = uint16(id)
@@ -343,7 +386,7 @@ func (d *Device) Name() string {
 // the multimedia function keys on a second interface.
 func (d *Device) Path() string {
 	var str [256]byte
-	ioctl(d.fd.Fd(), _EVIOCGPHYS(256), unsafe.Pointer(&str[0]))
+	ioctl(d.fd.Fd(), _EVIOCGPHYS(len(str)), unsafe.Pointer(&str[0]))
 	return string(str[:])
 }
 
@@ -351,7 +394,7 @@ func (d *Device) Path() string {
 // Most devices do not have this and will return an empty string.
 func (d *Device) Serial() string {
 	var str [256]byte
-	ioctl(d.fd.Fd(), _EVIOCGUNIQ(256), unsafe.Pointer(&str[0]))
+	ioctl(d.fd.Fd(), _EVIOCGUNIQ(len(str)), unsafe.Pointer(&str[0]))
 	return string(str[:])
 }
 
