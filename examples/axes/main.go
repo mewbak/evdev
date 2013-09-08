@@ -23,14 +23,54 @@ func main() {
 	// Make sure it is closed once we are done.
 	defer dev.Close()
 
-	// Ensure this device supports the needed event types.
-	if !hasType(dev, evdev.EvAbsolute) {
-		fmt.Fprintf(os.Stderr, "Device %q does not support absolute axis events.\n", node)
+	events := dev.EventTypes()
+	abs := dev.Supports(events, evdev.EvAbsolute)
+	rel := dev.Supports(events, evdev.EvRelative)
+
+	if !abs && !rel {
+		fmt.Fprintf(os.Stderr, "Device %q does not support relative or absolute axes.\n", node)
 		return
 	}
 
-	// Fetch the supported axes.
-	axes := dev.Axes()
+	if abs {
+		absAxes(dev)
+	}
+
+	if rel {
+		absAxes(dev)
+	}
+}
+
+// Testing for support of specific axes can be
+// done with the `dev.Supports()` method.
+func relAxes(dev *evdev.Device) {
+	axes := dev.RelativeAxes()
+	for n := 0; n < axes.Len(); n++ {
+		if !axes.Test(n) {
+			continue
+		}
+
+		fmt.Printf("  Relative axis 0x%02x ", n)
+
+		switch n {
+		case evdev.RelX:
+			fmt.Printf("X Axis: ")
+		case evdev.RelY:
+			fmt.Printf("Y Axis: ")
+		case evdev.RelZ:
+			fmt.Printf("Z Axis: ")
+		default: // More axes types...
+			fmt.Printf("Other axis\n")
+		}
+
+		fmt.Println()
+	}
+}
+
+// Testing for support of specific axes can be
+// done with the `dev.Supports()` method.
+func absAxes(dev *evdev.Device) {
+	axes := dev.AbsoluteAxes()
 	for n := 0; n < axes.Len(); n++ {
 		if !axes.Test(n) {
 			continue
@@ -50,23 +90,9 @@ func main() {
 		}
 
 		// Get axis information.
-		abs := dev.AbsInfo(n)
+		abs := dev.AbsoluteInfo(n)
 		fmt.Printf("%+v\n", abs)
 	}
-}
-
-// hasKeys determines if the given device supports the specified
-// event type. E.g.: EvKey, EvAbsolute, etc.
-func hasType(dev *evdev.Device, etype int) bool {
-	events := dev.EventTypes()
-
-	for n := 0; n < events.Len(); n++ {
-		if n == etype && events.Test(n) {
-			return true
-		}
-	}
-
-	return false
 }
 
 func parseArgs() string {

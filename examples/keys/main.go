@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"github.com/jteeuwen/evdev"
 	"os"
-	"time"
 )
 
 func main() {
@@ -25,7 +24,7 @@ func main() {
 	defer dev.Close()
 
 	// Ensure this device supports key/button events.
-	if !hasKeys(dev) {
+	if !dev.SupportsEvent(evdev.EvKey) {
 		fmt.Fprintf(os.Stderr, "Device %q does not support key/button events.\n", node)
 		return
 	}
@@ -33,21 +32,6 @@ func main() {
 	// Fetch the current key/button state and display it.
 	ks := dev.KeyState()
 	listState(ks)
-
-	<-time.After(1e8)
-}
-
-// hasKeys determines if the given device supports key/button state events.
-func hasKeys(dev *evdev.Device) bool {
-	events := dev.EventTypes()
-
-	for n := 0; n < events.Len(); n++ {
-		if n == evdev.EvKey && events.Test(n) {
-			return true
-		}
-	}
-
-	return false
 }
 
 // listState prints the global key/button state, as defined

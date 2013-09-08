@@ -63,6 +63,7 @@ func main() {
 		select {
 		case <-signals:
 			return
+
 		case evt := <-dev.Inbox:
 			fmt.Printf("%+v\n", evt)
 		}
