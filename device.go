@@ -33,12 +33,34 @@ func Open(node string) (dev *Device, err error) {
 
 // Close closes the underlying device node.
 func (d *Device) Close() (err error) {
+	d.Release()
+
 	if d.fd != nil {
 		err = d.fd.Close()
 		d.fd = nil
 	}
 
 	return
+}
+
+// Grab attempts to gain exclusive access to this device.
+// This means that we are the only ones receiving events from
+// the device; other processes will not.
+//
+// Be very careful with this. Especially trying to lock
+// keyboard access. If this is executed while we are running
+// in something like X, this call will prevent X from
+// receiving any and all keyboard events. All of them will only
+// be sent to our own process. If we do not properly handle
+// these key events, we may lock ourselves out of the system
+// and a hard reboot is required to 'fix' it.
+func (d *Device) Grab() bool {
+	return ioctl(d.fd.Fd(), _EVIOCGRAB, 1) == nil
+}
+
+// Release releases a previously obtained lock through `Device.Grab`.
+func (d *Device) Release() bool {
+	return ioctl(d.fd.Fd(), _EVIOCGRAB, 0) == nil
 }
 
 // Supports takes a bitset and a list of constants
@@ -133,11 +155,11 @@ func (d *Device) KeyMap(key int) int {
 // (list[n][1]).
 //
 // Be aware that the KeyMap functions may not work on every keyboard.
-func (d *Device) SetKeyMap(key, value int) {
+func (d *Device) SetKeyMap(key, value int) bool {
 	var m [2]int32
 	m[0] = int32(key)
 	m[1] = int32(value)
-	ioctl(d.fd.Fd(), _EVIOCSKEYCODE, unsafe.Pointer(&m[0]))
+	return ioctl(d.fd.Fd(), _EVIOCSKEYCODE, unsafe.Pointer(&m[0])) == nil
 }
 
 // RepeatState returns the current, global repeat state.
@@ -230,29 +252,29 @@ func (d *Device) ForceFeedbackCaps() (int, Bitset) {
 // running effect, without first stopping it.
 //
 // This is only applicable to devices with the EvForceFeedback event type set.
-func (d *Device) SetEffects(list ...*Effect) error {
+func (d *Device) SetEffects(list ...*Effect) bool {
 	for _, effect := range list {
 		err := ioctl(d.fd.Fd(), _EVIOCSFF, unsafe.Pointer(effect))
 		if err != nil {
-			return err
+			return false
 		}
 	}
 
-	return nil
+	return true
 }
 
 // UnsetEffects deletes the given effects from the device.
 //
 // This is only applicable to devices with the EvForceFeedback event type set.
-func (d *Device) UnsetEffects(list ...*Effect) error {
+func (d *Device) UnsetEffects(list ...*Effect) bool {
 	for _, effect := range list {
 		err := ioctl(d.fd.Fd(), _EVIOCRMFF, int(effect.Id))
 		if err != nil {
-			return err
+			return false
 		}
 	}
 
-	return nil
+	return true
 }
 
 // PlayEffect plays a previously uploaded effect.
