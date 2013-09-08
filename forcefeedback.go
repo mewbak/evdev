@@ -70,7 +70,7 @@ Supported effects are as follows:
 	  - FFSawDown       Sawtooth down waveform
 	  - FFCustom        Custom waveform
 	- FFRamp            Renders ramp effects
-	- FFSprint          Simulates the presence of a spring
+	- FFSpring          Simulates the presence of a spring
 	- FFFriction        Simulates friction
 	- FFDamper          Simulates damper effects
 	- FFRumble          Rumble effects
