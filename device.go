@@ -6,7 +6,6 @@ package evdev
 import (
 	"fmt"
 	"os"
-	"sync"
 	"unsafe"
 )
 
@@ -14,7 +13,6 @@ const eventBufferSize = 64
 
 // Device represents a single device node.
 type Device struct {
-	wg     sync.WaitGroup
 	fd     *os.File
 	Inbox  chan Event // Channel exposing incoming events.
 	Outbox chan Event // Channel for outgoing events.
@@ -28,7 +26,6 @@ func Open(node string) (dev *Device, err error) {
 	dev.Inbox = make(chan Event, eventBufferSize)
 	dev.Outbox = make(chan Event, 1)
 
-	dev.wg.Add(2)
 	go dev.pollIn()
 	go dev.pollOut()
 	return
@@ -41,10 +38,49 @@ func (d *Device) Close() (err error) {
 		d.fd = nil
 	}
 
-	close(d.Inbox)
-	close(d.Outbox)
-	d.wg.Wait()
 	return
+}
+
+// Supports takes a bitset and a list of constants
+// and tests one against the other to see if the device
+// supports a given set of properties.
+//
+// It returns true only if the bitset defines all the supplied types.
+// E.g.: To test for certain event types:
+//
+//     if dev.Supports(dev.EventTypes(), EvKey, EvRepeat) {
+//
+// To test for certain absolute axes:
+//
+//     if dev.Supports(dev.AbsoluteAxes(), AbsX, AbsY, AbsZ) {
+//
+// To test for certain relative axes:
+//
+//     if dev.Supports(dev.RelativeAxes(), RelX, RelY, RelZ) {
+func (d *Device) Supports(set Bitset, values ...int) bool {
+	for i := range values {
+		for n := 0; n < set.Len(); n++ {
+			if n == values[i] && set.Test(n) {
+				values[i] = -1
+				break
+			}
+		}
+	}
+
+	// If all the requested values have been
+	// found to have their respective bits set,
+	// their value has been changed to -1.
+	//
+	// If this is not the case, we know or
+	// more of the values are not defined and
+	// we fail this call.
+	for i := range values {
+		if values[i] > 0 {
+			return false
+		}
+	}
+
+	return true
 }
 
 // Keystate returns the current,global key- and button- states.
@@ -137,24 +173,35 @@ func (d *Device) SetRepeatState(initial, subsequent uint) bool {
 	return ioctl(d.fd.Fd(), _EVIOCSREP, unsafe.Pointer(&rep[0])) == nil
 }
 
-// Axes returns a bitfield indicating which axes are
+// AbsoluteAxes returns a bitfield indicating which absolute axes are
 // supported by the device.
-func (d *Device) Axes() Bitset {
+func (d *Device) AbsoluteAxes() Bitset {
 	bs := NewBitset(AbsMax)
 	buf := bs.Bytes()
 	ioctl(d.fd.Fd(), _EVIOCGBIT(EvAbsolute, len(buf)), unsafe.Pointer(&buf[0]))
 	return bs
 }
 
-// AbsInfo provides state information for one absolute axis.
+// AbsoluteInfo provides state information for one absolute axis.
 // If you want the global state for a device, you have to call
 // the function for each axis present on the device.
 // See Device.Axes() for details on how find them.
-func (d *Device) AbsInfo(axis int) AbsInfo {
+func (d *Device) AbsoluteInfo(axis int) AbsInfo {
 	var abs AbsInfo
 	ioctl(d.fd.Fd(), _EVIOCGABS(axis), unsafe.Pointer(&abs))
 	return abs
 }
+
+// RelativeAxes returns a bitfield indicating which relative axes are
+// supported by the device.
+func (d *Device) RelativeAxes() Bitset {
+	bs := NewBitset(RelMax)
+	buf := bs.Bytes()
+	ioctl(d.fd.Fd(), _EVIOCGBIT(EvRelative, len(buf)), unsafe.Pointer(&buf[0]))
+	return bs
+}
+
+// TODO(jimt): Do we need to implement more stuff related to relative axes?
 
 // ForceFeedbackCaps returns a bitset which specified the kind of Force Feedback
 // effects supported by this device. The bits can be compared against
@@ -172,29 +219,65 @@ func (d *Device) ForceFeedbackCaps() (int, Bitset) {
 	return int(count), bs
 }
 
-// Supports determines if the device supports the specified
-// event types. E.g.: EvKey, EvAbsolute, etc.
+// SetEffects sends the given list of Force Feedback effects
+// to the device. The length of the list should not exceed the
+// count returned from `Device.ForceFeedbackCaps()`.
 //
-// It returns true only if the device supports all the supplied
-// event types.
-func (d *Device) Supports(etype ...int) bool {
-	events := d.EventTypes()
-
-	for i := range etype {
-		for n := 0; n < events.Len(); n++ {
-			if n == etype[i] && events.Test(n) {
-				etype[i] = -1
-			}
+// After this call completes, the effect.Id field will contain
+// the effect's id which must be used when playing or stopping the effect.
+// It is also possible to reupload the same effect with the same
+// id later on with new parameters. This allows us to update a
+// running effect, without first stopping it.
+//
+// This is only applicable to devices with the EvForceFeedback event type set.
+func (d *Device) SetEffects(list ...*Effect) error {
+	for _, effect := range list {
+		err := ioctl(d.fd.Fd(), _EVIOCSFF, unsafe.Pointer(effect))
+		if err != nil {
+			return err
 		}
 	}
 
-	for i := range etype {
-		if etype[i] > 0 {
-			return false
+	return nil
+}
+
+// UnsetEffects deletes the given effects from the device.
+//
+// This is only applicable to devices with the EvForceFeedback event type set.
+func (d *Device) UnsetEffects(list ...*Effect) error {
+	for _, effect := range list {
+		err := ioctl(d.fd.Fd(), _EVIOCRMFF, int(effect.Id))
+		if err != nil {
+			return err
 		}
 	}
 
-	return true
+	return nil
+}
+
+// PlayEffect plays a previously uploaded effect.
+func (d *Device) PlayEffect(id int16) {
+	d.ToggleEffect(id, true)
+}
+
+// StopEffect stops a previously uploaded effect from playing.
+func (d *Device) StopEffect(id int16) {
+	d.ToggleEffect(id, false)
+}
+
+// ToggleEffect plays or stops a previously uploaded effect with the given id.
+func (d *Device) ToggleEffect(id int16, play bool) {
+	var e Event
+	e.Type = EvForceFeedback
+	e.Code = uint16(id)
+
+	if play {
+		e.Value = 1
+	} else {
+		e.Value = 0
+	}
+
+	d.Outbox <- e
 }
 
 // EventTypes determines the device's capabilities.
@@ -274,7 +357,7 @@ func (d *Device) Id() Id {
 // We can receive many events with a single read.
 // This is why the outgoing event channel has a large buffer.
 func (d *Device) pollIn() {
-	defer d.wg.Done()
+	defer close(d.Inbox)
 
 	var e Event
 
@@ -298,7 +381,7 @@ func (d *Device) pollIn() {
 // pollOut polls the outbox for pending messages.
 // These are then sent to the device.
 func (d *Device) pollOut() {
-	defer d.wg.Done()
+	defer close(d.Outbox)
 
 	var e Event
 	size := int(unsafe.Sizeof(e))
