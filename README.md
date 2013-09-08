@@ -9,6 +9,12 @@ mapped to `/dev/input/event[X]`.
 
 ### Known issues
 
+### Force Feedback
+
+Not all of the force feedback API is implemented.
+The documentation on this is pretty flaky, so it may take a while.
+
+
 #### Permissions
 
 Opening nodes in `/dev/input` may require root access. This means that
