@@ -3,7 +3,8 @@
 
 package evdev
 
-// Sounds
+// Sound events are used for sending sound
+// commands to simple sound output devices.
 const (
 	SndClick = 0x00
 	SndBell  = 0x01

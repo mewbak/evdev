@@ -3,7 +3,16 @@
 
 package evdev
 
-// Switch events
+// Switch events describe stateful binary switches. For example,
+// the SwLid code is used to denote when a laptop lid is closed.
+//
+// Upon binding to a device or resuming from suspend, a driver must report
+// the current switch state. This ensures that the device, kernel, and userspace
+// state is in sync.
+//
+// Upon resume, if the switch state is the same as before suspend, then the input
+// subsystem will filter out the duplicate switch state reports. The driver does
+// not need to keep the state of the switch at any time.
 const (
 	SwLid                = 0x00        // set = lid shut
 	SwTabletMode         = 0x01        // set = tablet mode

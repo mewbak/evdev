@@ -5,7 +5,7 @@ package evdev
 
 import "unsafe"
 
-// Autorepeat values
+// Repeat events are used for specifying autorepeating events.
 const (
 	RepDelay  = 0x00
 	RepPeriod = 0x01

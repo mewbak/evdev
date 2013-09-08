@@ -5,8 +5,6 @@ package evdev
 
 import "unsafe"
 
-// https://github.com/mirrors/linux-2.6/blob/f3b8436ad9a8ad36b3c9fa1fe030c7f38e5d3d0b/Documentation/input/ff.txt
-
 // Values describing the status of a force-feedback effect
 const (
 	FFStatusStopped = 0x00

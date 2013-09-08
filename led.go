@@ -5,7 +5,8 @@ package evdev
 
 import "unsafe"
 
-// LEDs
+// LED events are used for input and output to set and query the state of
+// various LEDs on devices.
 const (
 	LedNumLock    = 0x00
 	LedCapsLock   = 0x01
