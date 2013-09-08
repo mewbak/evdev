@@ -47,18 +47,19 @@ func (d *Device) Close() (err error) {
 // This means that we are the only ones receiving events from
 // the device; other processes will not.
 //
-// Be very careful with this. Especially trying to lock
-// keyboard access. If this is executed while we are running
-// in something like X, this call will prevent X from
-// receiving any and all keyboard events. All of them will only
-// be sent to our own process. If we do not properly handle
-// these key events, we may lock ourselves out of the system
-// and a hard reboot is required to 'fix' it.
+// This ability should be handled with care, especially
+// when trying to lock keyboard access. If this is
+// executed while we are running in something like X,
+// this call will prevent X from receiving any and all
+// keyboard events. All of them will only be sent to our
+// own process. If we do not properly handle these key
+// events, we may lock ourselves out of the system
+// and a hard reset is required to restore it.
 func (d *Device) Grab() bool {
 	return ioctl(d.fd.Fd(), _EVIOCGRAB, 1) == nil
 }
 
-// Release releases a previously obtained lock through `Device.Grab`.
+// Release releases a lock, previously obtained through `Device.Grab`.
 func (d *Device) Release() bool {
 	return ioctl(d.fd.Fd(), _EVIOCGRAB, 0) == nil
 }
