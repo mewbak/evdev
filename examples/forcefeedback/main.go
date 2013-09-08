@@ -133,12 +133,7 @@ func rumble(e *evdev.Effect) {
 
 func periodic(e *evdev.Effect) {
 	e.Type = evdev.FFPeriodic
-	e.Id = -1
-	e.Replay.Length = 20000 // 20 seconds
-	e.Replay.Delay = 0
 	e.Direction = evdev.DirLeft // Along X axis
-	e.Trigger.Button = 0
-	e.Trigger.Interval = 0
 
 	var p evdev.PeriodicEffect
 	p.Waveform = evdev.FFSine
