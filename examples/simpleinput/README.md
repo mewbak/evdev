@@ -1,13 +1,12 @@
 ## Axes
 
 This program demonstrates how to use the simplified
-input components of the evdev library. These will a attempt
+input components of the evdev library. These will attempt
 to automatically bind to a set of specified devices and
 give you immediate access to their events.
 
-This is more likely to be the usecase for most clients
-as opposed to the advanced event handling demonstrated in
-other example programs.
+E.g.: We want a list of all keyboards, or all mouse-like
+devices.
 
 
 ### Usage
