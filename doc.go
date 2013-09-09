@@ -7,9 +7,3 @@ It allows a Go application to track events from any devices
 mapped to `/dev/input/event[X]`.
 */
 package evdev
-
-/* References:
-
-https://www.kernel.org/doc/Documentation/input/event-codes.txt
-https://github.com/mirrors/linux-2.6/blob/f3b8436ad9a8ad36b3c9fa1fe030c7f38e5d3d0b/Documentation/input/ff.txt
-*/

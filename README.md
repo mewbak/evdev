@@ -96,6 +96,13 @@ these changes take effect.
     go get github.com/jteeuwen/evdev
 
 
+### References
+
+* [linuxjournal.com](http://www.linuxjournal.com/node/6429/print)
+* [Documentation/input/event-codes.txt](https://www.kernel.org/doc/Documentation/input/event-codes.txt)
+* [Documentation/input/ff.txt](https://www.kernel.org/doc/Documentation/input/ff.txt)
+
+
 ### License
 
 Unless otherwise stated, all of the work in this project is subject to a
