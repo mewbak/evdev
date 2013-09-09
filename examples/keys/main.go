@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/jteeuwen/evdev"
 	"os"
+	"os/signal"
 )
 
 func main() {
@@ -32,6 +33,40 @@ func main() {
 	// Fetch the current key/button state and display it.
 	ks := dev.KeyState()
 	listState(ks)
+
+	// Alternatively, we can read individual key/button press/release events
+	// from the device.
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, os.Interrupt, os.Kill)
+	for {
+		select {
+		case <-signals:
+			return
+
+		case evt := <-dev.Inbox:
+			if evt.Type != evdev.EvKeys {
+				continue // Not a key event.
+			}
+
+			if evt.Value == 0 {
+				continue // Key is released -- we want key presses.
+			}
+
+			switch evt.Code {
+			case evdev.KeyA:
+				fmt.Println("A was pressed")
+			case evdev.KeyLeftShift:
+				fmt.Println("Left Shift was pressed")
+			case evdev.KeyEscape:
+				fmt.Println("Escape was pressed")
+
+			case evdev.BtnLeft:
+				fmt.Println("Left button was pressed")
+			case evdev.Btn3:
+				fmt.Println("Button 3 was pressed")
+			}
+		}
+	}
 }
 
 // listState prints the global key/button state, as defined
