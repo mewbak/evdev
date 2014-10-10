@@ -175,7 +175,7 @@ func (d *Device) pollIn() {
 			return
 		}
 
-		evt := (*(*[1<<31 - 1]Event)(unsafe.Pointer(&buf[0])))[:n/size]
+		evt := (*(*[1<<27 - 1]Event)(unsafe.Pointer(&buf[0])))[:n/size]
 
 		for n = range evt {
 			d.Inbox <- evt[n]
@@ -192,7 +192,7 @@ func (d *Device) pollOut() {
 	size := int(unsafe.Sizeof(e))
 
 	for msg := range d.Outbox {
-		buf := (*(*[1<<31 - 1]byte)(unsafe.Pointer(&msg)))[:size]
+		buf := (*(*[1<<27 - 1]byte)(unsafe.Pointer(&msg)))[:size]
 
 		n, err := d.fd.Write(buf)
 		if err != nil {
