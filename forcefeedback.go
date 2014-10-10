@@ -201,7 +201,7 @@ func (e *PeriodicEffect) Data() []int16 {
 	if e.custom_data == nil {
 		return nil
 	}
-	return (*(*[1<<31 - 1]int16)(e.custom_data))[:e.custom_len]
+	return (*(*[1<<27 - 1]int16)(e.custom_data))[:e.custom_len]
 }
 
 // SetData sets custom waveform information.
